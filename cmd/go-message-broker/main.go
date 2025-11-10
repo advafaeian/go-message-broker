@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"net"
 	"os"
 )
@@ -16,12 +17,23 @@ func main() {
 
 	l, err := net.Listen("tcp", "0.0.0.0:9092")
 	if err != nil {
-		fmt.Println("Failed to bind to port 9092")
-		os.Exit(1)
+		log.Fatal("Failed to bind to port 9092")
 	}
-	_, err = l.Accept()
-	if err != nil {
-		fmt.Println("Error accepting connection: ", err.Error())
-		os.Exit(1)
+	defer l.Close()
+
+	var c net.Conn
+	for {
+		c, err = l.Accept()
+		go func() {
+			defer c.Close()
+			if err != nil {
+				log.Fatal("Error accepting connection: ", err.Error())
+			}
+			var response []byte = []byte{0, 7}
+
+			c.Write(response)
+		}()
+
 	}
+
 }
