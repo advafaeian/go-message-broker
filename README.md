@@ -10,9 +10,9 @@ I'm Documenting progress and insights while completing each stage of the challen
 
 
 ### 🏗️ Core Setup
-- ⚪️ Bind to a port
-- ⚪️ Send Correlation ID
-- ⚪️ Parse Correlation ID
+- 🟢 Bind to a port
+- 🟢️ Send Correlation ID
+- 🟢 Parse Correlation ID
 - ⚪️ Parse API Version
 - ⚪️ Handle `ApiVersions` requests  
 

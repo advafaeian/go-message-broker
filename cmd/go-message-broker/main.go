@@ -1,15 +1,10 @@
 package main
 
 import (
-	"fmt"
+	"io"
 	"log"
 	"net"
-	"os"
 )
-
-// Ensures gofmt doesn't remove the "net" and "os" imports in stage 1 (feel free to remove this!)
-var _ = net.Listen
-var _ = os.Exit
 
 func intToBytes(n int32) []byte {
 	return []byte{
@@ -20,9 +15,27 @@ func intToBytes(n int32) []byte {
 	}
 }
 
+func handleConnection(conn net.Conn) {
+	defer conn.Close()
+
+	var buf = make([]byte, 12)
+	_, err := io.ReadFull(conn, buf)
+	if err != nil {
+		log.Printf("Error reading from connection: %v", err)
+		return
+	}
+
+	correlation_id := buf[8:12]
+	response := append(intToBytes(0), correlation_id...)
+
+	_, err = conn.Write(response)
+	if err != nil {
+		log.Printf("Error writing response: %v", err)
+		return
+	}
+}
+
 func main() {
-	// You can use print statements as follows for debugging, they'll be visible when running tests.
-	fmt.Println("Logs from your program will appear here!")
 
 	l, err := net.Listen("tcp", "0.0.0.0:9092")
 	if err != nil {
@@ -30,22 +43,14 @@ func main() {
 	}
 	defer l.Close()
 
-	var c net.Conn
 	for {
-		c, err = l.Accept()
-		go func() {
-			defer c.Close()
-			if err != nil {
-				log.Fatal("Error accepting connection: ", err.Error())
-			}
-			var correlation_id = make([]byte, 12)
-			c.Read(correlation_id)
+		conn, err := l.Accept()
+		if err != nil {
+			log.Printf("Error accepting connection: %v", err)
+			continue
+		}
 
-			correlation_id = correlation_id[8:12]
-			response := append(intToBytes(0), correlation_id...)
-
-			c.Write(response)
-		}()
+		go handleConnection(conn)
 
 	}
 
